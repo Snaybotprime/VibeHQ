@@ -7,6 +7,8 @@ import {
 import { electronAPI } from "@electron-toolkit/preload";
 import {
   IPC,
+  type ListAgentsRequest,
+  type ListAgentsResult,
   type OpenProjectPayload,
   type PickProjectDirResult,
   type PtyDataEvent,
@@ -62,6 +64,8 @@ const appApi = {
 const actions = {
   writeAgent: (req: WriteAgentRequest): Promise<WriteAgentResult> =>
     ipcRenderer.invoke(IPC.writeAgent, req),
+  listAgents: (req: ListAgentsRequest): Promise<ListAgentsResult> =>
+    ipcRenderer.invoke(IPC.listAgents, req),
   revealInFinder: (targetPath: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke(IPC.revealInFinder, targetPath),
   clipboardWrite: (text: string): Promise<{ ok: boolean }> =>

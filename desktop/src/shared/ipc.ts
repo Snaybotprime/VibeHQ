@@ -79,6 +79,21 @@ export type PickProjectDirResult =
   | { ok: false; cancelled: true }
   | { ok: false; error: string };
 
+export type AgentInfo = {
+  name: string;
+  description: string;
+  scope: AgentScope;
+  path: string;
+};
+
+export type ListAgentsRequest = {
+  projectDir?: string;
+};
+
+export type ListAgentsResult =
+  | { ok: true; agents: AgentInfo[] }
+  | { ok: false; error: string };
+
 export const IPC = {
   ptySpawn: "pty:spawn",
   ptyWrite: "pty:write",
@@ -90,6 +105,7 @@ export const IPC = {
   appOpenProject: "app:open-project",
   diagLog: "diag:log",
   writeAgent: "agent:write",
+  listAgents: "agent:list",
   revealInFinder: "fs:reveal",
   clipboardWrite: "clipboard:write",
   clipboardRead: "clipboard:read",

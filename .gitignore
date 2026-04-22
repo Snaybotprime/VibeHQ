@@ -11,3 +11,5 @@ out
 .obsidian
 .playwright-mcp
 .claude
+!Agentrepo/.claude/
+!Agentrepo/.claude/**

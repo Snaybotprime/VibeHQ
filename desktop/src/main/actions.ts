@@ -3,6 +3,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import {
   IPC,
+  type AgentInfo,
+  type ListAgentsRequest,
+  type ListAgentsResult,
   type PickProjectDirResult,
   type WriteAgentRequest,
   type WriteAgentResult,
@@ -62,6 +65,58 @@ async function resolveAgentPath(
   return path.join(baseDir, `${req.name}.md`);
 }
 
+function parseYamlScalar(raw: string): string {
+  const v = raw.trim();
+  if (v.startsWith('"') && v.endsWith('"') && v.length >= 2) {
+    return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+  }
+  if (v.startsWith("'") && v.endsWith("'") && v.length >= 2) {
+    return v.slice(1, -1).replace(/''/g, "'");
+  }
+  return v;
+}
+
+async function readAgentsFromDir(
+  dir: string,
+  scope: "global" | "project",
+): Promise<AgentInfo[]> {
+  let entries: string[];
+  try {
+    entries = await fs.readdir(dir);
+  } catch {
+    return [];
+  }
+  const out: AgentInfo[] = [];
+  for (const entry of entries) {
+    if (!entry.endsWith(".md")) continue;
+    const full = path.join(dir, entry);
+    let body: string;
+    try {
+      body = await fs.readFile(full, "utf8");
+    } catch {
+      continue;
+    }
+    const fallbackName = entry.replace(/\.md$/, "");
+    let name = fallbackName;
+    let description = "";
+    if (body.startsWith("---\n") || body.startsWith("---\r\n")) {
+      const end = body.indexOf("\n---", 4);
+      if (end !== -1) {
+        const header = body.slice(4, end);
+        for (const line of header.split(/\r?\n/)) {
+          const m = /^([a-zA-Z_][\w-]*)\s*:\s*(.*)$/.exec(line);
+          if (!m) continue;
+          const key = m[1].toLowerCase();
+          if (key === "name") name = parseYamlScalar(m[2]) || fallbackName;
+          else if (key === "description") description = parseYamlScalar(m[2]);
+        }
+      }
+    }
+    out.push({ name, description, scope, path: full });
+  }
+  return out;
+}
+
 export function registerActionHandlers(): void {
   ipcMain.handle(
     IPC.writeAgent,
@@ -90,6 +145,44 @@ export function registerActionHandlers(): void {
           return { ok: false, error: "An agent with that name already exists" };
         }
         return { ok: false, error: err.message ?? String(err) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    IPC.listAgents,
+    async (_e, req: ListAgentsRequest): Promise<ListAgentsResult> => {
+      try {
+        const home = process.env.HOME;
+        if (!home) return { ok: false, error: "HOME not set" };
+
+        const agents: AgentInfo[] = [];
+        agents.push(
+          ...(await readAgentsFromDir(
+            path.join(home, ".claude", "agents"),
+            "global",
+          )),
+        );
+
+        if (req?.projectDir) {
+          const resolved = path.resolve(req.projectDir);
+          if (resolved === home || resolved.startsWith(home + path.sep)) {
+            agents.push(
+              ...(await readAgentsFromDir(
+                path.join(resolved, ".claude", "agents"),
+                "project",
+              )),
+            );
+          }
+        }
+
+        agents.sort((a, b) => {
+          if (a.scope !== b.scope) return a.scope === "project" ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+        return { ok: true, agents };
+      } catch (e) {
+        return { ok: false, error: (e as Error).message ?? String(e) };
       }
     },
   );

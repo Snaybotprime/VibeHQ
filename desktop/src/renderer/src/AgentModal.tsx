@@ -28,7 +28,9 @@ export function AgentModal({ project, defaultScope, onClose, onToast }: Props) {
   const [systemPrompt, setSystemPrompt] = useState("");
   const [tools, setTools] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dropActive, setDropActive] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     nameRef.current?.focus();
@@ -48,6 +50,58 @@ export function AgentModal({ project, defaultScope, onClose, onToast }: Props) {
     NAME_RE.test(cleanName) &&
     description.trim().length > 0 &&
     systemPrompt.trim().length > 0;
+
+  // Attach native drag/drop listeners to the textarea. React's synthetic
+  // onDrop doesn't reliably fire for file drops in Electron — go native.
+  useEffect(() => {
+    const el = promptRef.current;
+    if (!el) return;
+    const onDragOver = (e: DragEvent) => {
+      if (!e.dataTransfer?.types.includes("Files")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "copy";
+      setDropActive(true);
+    };
+    const onDragLeave = (e: DragEvent) => {
+      if (e.target === el) setDropActive(false);
+    };
+    const onDrop = (e: DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setDropActive(false);
+      const paths: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const p = window.helix.actions.getPathForFile(files[i]);
+          if (p) paths.push(p);
+        } catch {
+          /* ignore non-file drops */
+        }
+      }
+      if (paths.length === 0) return;
+      const text = paths.join(" ");
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const next = el.value.slice(0, start) + text + el.value.slice(end);
+      setSystemPrompt(next);
+      requestAnimationFrame(() => {
+        el.focus();
+        const caret = start + text.length;
+        el.setSelectionRange(caret, caret);
+      });
+    };
+    el.addEventListener("dragover", onDragOver);
+    el.addEventListener("dragleave", onDragLeave);
+    el.addEventListener("drop", onDrop);
+    return () => {
+      el.removeEventListener("dragover", onDragOver);
+      el.removeEventListener("dragleave", onDragLeave);
+      el.removeEventListener("drop", onDrop);
+    };
+  }, []);
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -148,12 +202,14 @@ export function AgentModal({ project, defaultScope, onClose, onToast }: Props) {
           <label className="pd-field">
             <span className="pd-field-label">System prompt</span>
             <textarea
+              ref={promptRef}
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               placeholder="You are a deployment checker. Before approving a deploy…"
               rows={8}
-              className="pd-textarea"
+              className={`pd-textarea${dropActive ? " is-drop-target" : ""}`}
             />
+            <span className="pd-field-note">Drop a file to insert its path.</span>
           </label>
 
           <label className="pd-field">

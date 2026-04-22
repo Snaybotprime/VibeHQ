@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTabs } from "./store";
 import { fetchProjects, type ScannedProject } from "./api";
 import { AgentModal } from "./AgentModal";
+import type { AgentInfo } from "../../shared/ipc";
 
 type ContextMenuState = {
   project: ScannedProject;
@@ -98,6 +99,7 @@ export function Sidebar({
 
   const [menu, setMenu] = useState<ContextMenuState>(null);
   const [agentModal, setAgentModal] = useState<AgentModalState>(null);
+  const [menuAgents, setMenuAgents] = useState<AgentInfo[] | null>(null);
 
   // Close menu on outside click / escape
   useEffect(() => {
@@ -111,6 +113,27 @@ export function Sidebar({
     return () => {
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("keydown", onKey);
+    };
+  }, [menu]);
+
+  // Fetch agents (global + project-scoped) whenever the menu opens.
+  useEffect(() => {
+    if (!menu) {
+      setMenuAgents(null);
+      return;
+    }
+    let cancelled = false;
+    window.helix.actions
+      .listAgents({ projectDir: menu.project.dir })
+      .then((res) => {
+        if (cancelled) return;
+        setMenuAgents(res.ok ? res.agents : []);
+      })
+      .catch(() => {
+        if (!cancelled) setMenuAgents([]);
+      });
+    return () => {
+      cancelled = true;
     };
   }, [menu]);
 
@@ -164,6 +187,18 @@ export function Sidebar({
     selectProject(p.id === selectedProjectId ? null : p.id);
   };
 
+  // Used by inactive-row entries to distinguish single vs. double click.
+  // A single click (selection toggle) is deferred briefly so a double click
+  // (open-in-new-tab) can cancel it.
+  const clickTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current !== null) {
+        window.clearTimeout(clickTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleProjectRightClick = (
     e: React.MouseEvent,
     p: ScannedProject,
@@ -182,6 +217,18 @@ export function Sidebar({
       cwd: p.dir,
       cmd: "claude --allow-dangerously-skip-permissions",
       title: p.name,
+    });
+    selectProject(p.id);
+  };
+
+  const launchAgentForProject = (p: ScannedProject, agent: AgentInfo) => {
+    // Agent names are constrained to [a-z0-9_-]; still single-quote for safety.
+    const msg = `Use the ${agent.name} subagent.`;
+    const quoted = `'${msg.replace(/'/g, "'\\''")}'`;
+    newTab({
+      cwd: p.dir,
+      cmd: `claude ${quoted}`,
+      title: `${p.name} · ${agent.name}`,
     });
     selectProject(p.id);
   };
@@ -275,9 +322,24 @@ export function Sidebar({
                     className={`pd-sidebar-item inactive ${
                       selectedProjectId === p.id ? "active" : ""
                     }`}
-                    onClick={() => handleProjectClick(p)}
+                    onClick={() => {
+                      if (clickTimerRef.current !== null) {
+                        window.clearTimeout(clickTimerRef.current);
+                      }
+                      clickTimerRef.current = window.setTimeout(() => {
+                        clickTimerRef.current = null;
+                        handleProjectClick(p);
+                      }, 220);
+                    }}
+                    onDoubleClick={() => {
+                      if (clickTimerRef.current !== null) {
+                        window.clearTimeout(clickTimerRef.current);
+                        clickTimerRef.current = null;
+                      }
+                      openTabForProjectAllowBypass(p);
+                    }}
                     onContextMenu={(e) => handleProjectRightClick(e, p)}
-                    title={p.dir}
+                    title={`${p.dir} — double-click to open in new tab`}
                   >
                     <span className="pd-sidebar-dot" />
                     <span className="pd-sidebar-name">{p.name}</span>
@@ -351,6 +413,28 @@ export function Sidebar({
           >
             Open in split pane
           </button>
+          {menuAgents && menuAgents.length > 0 && (
+            <>
+              <div className="pd-ctx-sep" />
+              <div className="pd-ctx-heading">Launch agent</div>
+              {menuAgents.map((a) => (
+                <button
+                  key={a.path}
+                  onClick={() => {
+                    launchAgentForProject(menu.project, a);
+                    setMenu(null);
+                  }}
+                  title={a.description || a.path}
+                >
+                  {a.name}
+                  <span className="pd-ctx-sub">
+                    {a.scope === "project" ? "this project" : "global"}
+                    {a.description ? ` · ${a.description}` : ""}
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
           <div className="pd-ctx-sep" />
           <button
             onClick={() => {

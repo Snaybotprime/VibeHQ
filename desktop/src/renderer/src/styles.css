@@ -712,6 +712,18 @@
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;
   color: rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+.pd-ctx-heading {
+  padding: 6px 10px 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .pd-ctx-sep {
@@ -870,6 +882,12 @@
   outline: none;
   border-color: rgba(126, 56, 255, 0.55);
   box-shadow: 0 0 0 3px rgba(126, 56, 255, 0.18);
+}
+
+.pd-textarea.is-drop-target {
+  border-color: rgba(126, 56, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(126, 56, 255, 0.25);
+  background: rgba(126, 56, 255, 0.06);
 }
 
 .pd-scope-row {

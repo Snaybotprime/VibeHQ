@@ -1,4 +1,6 @@
 import type {
+  ListAgentsRequest,
+  ListAgentsResult,
   OpenProjectPayload,
   PickProjectDirResult,
   PtyDataEvent,
@@ -35,6 +37,7 @@ export type HelixAPI = {
   };
   actions: {
     writeAgent: (req: WriteAgentRequest) => Promise<WriteAgentResult>;
+    listAgents: (req: ListAgentsRequest) => Promise<ListAgentsResult>;
     revealInFinder: (
       path: string,
     ) => Promise<{ ok: boolean; error?: string }>;
