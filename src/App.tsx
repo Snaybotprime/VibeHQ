@@ -506,9 +506,11 @@ export default function App() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // Group projects into coarse "clusters" by tag — customise this to
+    // match whatever tag taxonomy you use in src/projects.ts.
     const clusterOf = (p: ResolvedProject): string => {
-      if (p.tags.includes("canton")) return "canton";
-      if (p.tags.includes("helix")) return "helix";
+      if (p.tags.includes("work")) return "work";
+      if (p.tags.includes("oss")) return "oss";
       return "personal";
     };
     const list = resolved.filter((p) => {

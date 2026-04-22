@@ -174,7 +174,6 @@ Work through these phases sequentially. Do not skip ahead; findings in early pha
 - **Wallet interactions:** phishing-grade `eth_sign` / `personal_sign` messages, unlimited approvals, approval sniping.
 - **RPC & indexer:** trust in third-party RPC (response tampering), indexer lag leading to double-spend UX bugs, chain reorg handling.
 - **Bridges & cross-chain:** relayer trust model, message replay, finality assumptions.
-- **Canton / permissioned-ledger context:** party-hosting trust, participant-node isolation, read delegation, DAR upgrade authorization, CIP compliance where relevant.
 
 ---
 

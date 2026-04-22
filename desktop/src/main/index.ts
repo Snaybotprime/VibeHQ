@@ -19,7 +19,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
-    app.setAppUserModelId("com.sneh.hq");
+    app.setAppUserModelId("com.vibehq.hq");
     registerPtyHandlers();
     registerActionHandlers();
     startOpenServer();
