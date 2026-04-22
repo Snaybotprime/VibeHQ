@@ -111,8 +111,9 @@ export function TerminalPane({ paneId, cwd, cmd, active, onExit }: Props) {
     let disposed = false;
     const api = window.helix;
 
-    // ⌘C / ⌘V / ⌘A / ⌘X — copy selection, paste clipboard, select all.
-    // Returning false prevents xterm from sending the key to the PTY.
+    // ⌘C / ⌘A / ⌘X — copy selection, select all. ⌘V is handled by xterm's
+    // native paste event listener, which respects bracketed-paste mode and
+    // routes through onData below. Don't intercept it here or it pastes twice.
     term.attachCustomKeyEventHandler((e) => {
       if (e.type !== "keydown" || !e.metaKey) return true;
       const key = e.key.toLowerCase();
@@ -128,17 +129,6 @@ export function TerminalPane({ paneId, cwd, cmd, active, onExit }: Props) {
         // (On macOS ⌘C isn't mapped to SIGINT in xterm by default, so passing it
         // through is harmless — but it keeps future bindings consistent.)
         return true;
-      }
-      if (key === "v") {
-        api.actions
-          .clipboardRead()
-          .then((r) => {
-            if (!disposed && r.ok && r.text) {
-              api.pty.write({ paneId, data: r.text });
-            }
-          })
-          .catch(() => {});
-        return false;
       }
       if (key === "a") {
         term.selectAll();
