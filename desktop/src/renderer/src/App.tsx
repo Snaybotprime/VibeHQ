@@ -121,15 +121,21 @@ export default function App() {
   // Safety net: if a keystroke arrives and focus isn't on an xterm textarea
   // (e.g. the user clicked the titlebar), bounce focus back to the active
   // terminal. Doesn't replay the key — next one lands.
+  //
+  // Skip when focus is on a real editable control (modal inputs, tab-rename
+  // input, etc.) — otherwise every keystroke would yank focus back into the
+  // terminal and the user could only ever type one character.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey) return;
       const ae = document.activeElement as HTMLElement | null;
-      if (!ae?.classList.contains("xterm-helper-textarea")) {
-        const st = useTabs.getState();
-        const tab = st.tabs.find((t) => t.id === st.activeTabId);
-        if (tab) focusTerminal(tab.focusedPaneId);
-      }
+      if (ae?.classList.contains("xterm-helper-textarea")) return;
+      const tag = ae?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (ae?.isContentEditable) return;
+      const st = useTabs.getState();
+      const tab = st.tabs.find((t) => t.id === st.activeTabId);
+      if (tab) focusTerminal(tab.focusedPaneId);
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
