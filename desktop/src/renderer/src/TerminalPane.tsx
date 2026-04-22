@@ -109,7 +109,7 @@ export function TerminalPane({ paneId, cwd, cmd, active, onExit }: Props) {
     fitSafe();
 
     let disposed = false;
-    const api = window.helix;
+    const api = window.hq;
 
     // ⌘C / ⌘A / ⌘X — copy selection, select all. ⌘V is handled by xterm's
     // native paste event listener, which respects bracketed-paste mode and
@@ -334,7 +334,7 @@ export function TerminalPane({ paneId, cwd, cmd, active, onExit }: Props) {
       } catch {
         /* ignore */
       }
-      window.helix.pty.resize({
+      window.hq.pty.resize({
         paneId,
         cols: term.cols,
         rows: term.rows,

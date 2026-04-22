@@ -89,7 +89,7 @@ type TabActions = {
 
 export type TabStore = PersistedShape & TransientShape & TabActions;
 
-const HOME = typeof window !== "undefined" ? window.helix.app.homedir : "/";
+const HOME = typeof window !== "undefined" ? window.hq.app.homedir : "/";
 
 function genId(prefix = "t"): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;

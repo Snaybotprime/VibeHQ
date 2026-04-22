@@ -39,7 +39,7 @@ export function Sidebar({
     if (adding) return;
     setAdding(true);
     try {
-      const result = await window.helix.actions.pickProjectDir();
+      const result = await window.hq.actions.pickProjectDir();
       if (!result.ok) {
         if ("cancelled" in result) return;
         onToast("error", result.error);
@@ -91,7 +91,7 @@ export function Sidebar({
       'cd "$HOME/$__hqname" && ' +
       "clear && claude";
     newTab({
-      cwd: window.helix.app.homedir,
+      cwd: window.hq.app.homedir,
       cmd: script,
       title: "New project",
     });
@@ -123,7 +123,7 @@ export function Sidebar({
       return;
     }
     let cancelled = false;
-    window.helix.actions
+    window.hq.actions
       .listAgents({ projectDir: menu.project.dir })
       .then((res) => {
         if (cancelled) return;
@@ -459,7 +459,7 @@ export function Sidebar({
           <div className="pd-ctx-sep" />
           <button
             onClick={() => {
-              window.helix.actions.clipboardWrite(menu.project.dir);
+              window.hq.actions.clipboardWrite(menu.project.dir);
               onToast("ok", `Copied path: ${menu.project.dir}`);
               setMenu(null);
             }}
@@ -468,7 +468,7 @@ export function Sidebar({
           </button>
           <button
             onClick={() => {
-              window.helix.actions.revealInFinder(menu.project.dir);
+              window.hq.actions.revealInFinder(menu.project.dir);
               setMenu(null);
             }}
           >

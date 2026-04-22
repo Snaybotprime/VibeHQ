@@ -26,7 +26,7 @@ function claudeCommandFor(mode: PermissionMode): string {
 
 async function applyModeToTab(tab: Tab, mode: PermissionMode): Promise<void> {
   const paneId = tab.focusedPaneId;
-  const api = window.helix;
+  const api = window.hq;
   // Interrupt anything running, then type the new claude invocation.
   await api.pty.write({ paneId, data: "" });
   await new Promise((r) => setTimeout(r, 60));

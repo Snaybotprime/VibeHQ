@@ -143,7 +143,7 @@ export default function App() {
 
   // /open from the web dashboard → new tab
   useEffect(() => {
-    const off = window.helix.app.onOpenProject(({ dir, cmd, name }) => {
+    const off = window.hq.app.onOpenProject(({ dir, cmd, name }) => {
       newTab({ cwd: dir, cmd, title: name });
     });
     return off;
@@ -258,7 +258,7 @@ export default function App() {
       const results = await Promise.all(
         allPaneIds.map(async (paneId) => {
           try {
-            const r = await window.helix.pty.fg({ paneId });
+            const r = await window.hq.pty.fg({ paneId });
             return [paneId, r.ok ? r.name : undefined] as const;
           } catch {
             return [paneId, undefined] as const;

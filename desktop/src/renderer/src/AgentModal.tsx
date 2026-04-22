@@ -75,7 +75,7 @@ export function AgentModal({ project, defaultScope, onClose, onToast }: Props) {
       const paths: string[] = [];
       for (let i = 0; i < files.length; i++) {
         try {
-          const p = window.helix.actions.getPathForFile(files[i]);
+          const p = window.hq.actions.getPathForFile(files[i]);
           if (p) paths.push(p);
         } catch {
           /* ignore non-file drops */
@@ -111,7 +111,7 @@ export function AgentModal({ project, defaultScope, onClose, onToast }: Props) {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-      const res = await window.helix.actions.writeAgent({
+      const res = await window.hq.actions.writeAgent({
         scope,
         projectDir: scope === "project" ? project.dir : undefined,
         name: cleanName,

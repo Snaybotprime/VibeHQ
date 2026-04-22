@@ -18,7 +18,7 @@ import type {
 
 type Unsubscribe = () => void;
 
-export type HelixAPI = {
+export type HqAPI = {
   version: string;
   pty: {
     spawn: (req: PtySpawnRequest) => Promise<PtySpawnResult>;
@@ -50,7 +50,7 @@ export type HelixAPI = {
 
 declare global {
   interface Window {
-    helix: HelixAPI;
+    hq: HqAPI;
   }
 }
 

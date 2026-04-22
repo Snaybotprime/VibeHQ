@@ -236,8 +236,6 @@ const SKIP_TOP = new Set([
   "Music",
   "Pictures",
   "Public",
-  "gsf_data",
-  "scraper-env",
   // Grouping dirs — their children are scanned separately below.
   "projects",
   "code",

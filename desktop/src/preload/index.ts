@@ -80,7 +80,7 @@ const actions = {
     ipcRenderer.invoke(IPC.pickProjectDir),
 };
 
-const helix = {
+const hq = {
   version: "0.1.0",
   pty,
   app: appApi,
@@ -90,10 +90,10 @@ const helix = {
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld("electron", electronAPI);
-    contextBridge.exposeInMainWorld("helix", helix);
+    contextBridge.exposeInMainWorld("hq", hq);
   } catch (error) {
     console.error(error);
   }
 }
 
-export type HelixAPI = typeof helix;
+export type HqAPI = typeof hq;
